@@ -7,37 +7,55 @@
 html, body {
   width: 100%;
   height: 100%;
-  background: #000;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  font-family: 'Courier New', monospace;
+  /* Deep space gradient behind the letterbox bars */
+  background: radial-gradient(ellipse at center, #0d0020 0%, #000000 70%);
 }
 
+/* ─── CONTAINER ─────────────────────────────────────────────────────────────
+   Fix: min() picks the axis that constrains first.
+   Portrait phone (390×844): width=390, height=min(844, 390*16/9)=693 → 9:16 ✓
+   Landscape desktop (1920×1080): width=min(1920, 1080*9/16)=607→540, height=960 ✓
+   Square (800×800): width=min(800,450)=450, height=min(800,800)=800 → 9:16 ✓
+*/
 #game-container {
   position: relative;
-  width: 100vmin;
-  height: 100vmin;
-  max-width: 540px;
+  width:  min(100vw, calc(100vh * 9 / 16));
+  height: min(100vh, calc(100vw * 16 / 9));
+  max-width:  540px;
   max-height: 960px;
+
+  /* Neon border that pulses between cyan and magenta */
+  animation: border-pulse 5s ease-in-out infinite;
 }
 
-/* Letterbox: maintain 9:16 portrait */
-@media (min-aspect-ratio: 9/16) {
-  #game-container {
-    width: calc(100vh * 9 / 16);
-    height: 100vh;
+@keyframes border-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0  6px 1px #00f5ff,
+      0 0 22px 2px rgba(0, 245, 255, 0.35),
+      0 0 60px 4px rgba(0, 245, 255, 0.08);
+  }
+  50% {
+    box-shadow:
+      0 0  6px 1px #ff00aa,
+      0 0 22px 2px rgba(255, 0, 170, 0.35),
+      0 0 60px 4px rgba(255, 0, 170, 0.08);
   }
 }
 
+/* Canvas fills the container exactly — CSS scales it from native 540×960 */
 #game-container canvas {
   display: block;
-  width: 100% !important;
+  width:  100% !important;
   height: 100% !important;
+  image-rendering: pixelated; /* keeps pixel-art sharpness on low-res screens */
 }
 
-/* CRT scanlines */
+/* ─── CRT SCANLINES ────────────────────────────────────────────────────────── */
 #crt-overlay {
   position: absolute;
   inset: 0;
@@ -45,22 +63,42 @@ html, body {
   z-index: 10;
   background: repeating-linear-gradient(
     to bottom,
-    transparent 0px,
-    transparent 2px,
-    rgba(0, 0, 0, 0.08) 2px,
-    rgba(0, 0, 0, 0.08) 4px
+    transparent         0px,
+    transparent         3px,
+    rgba(0,0,0, 0.13)   3px,
+    rgba(0,0,0, 0.13)   4px
   );
+  /* subtle flicker */
+  animation: crt-flicker 8s step-end infinite;
 }
 
-/* Vignette */
+@keyframes crt-flicker {
+  0%, 95%, 100% { opacity: 1; }
+  96%           { opacity: 0.92; }
+  97%           { opacity: 1; }
+  98%           { opacity: 0.95; }
+}
+
+/* ─── VIGNETTE ──────────────────────────────────────────────────────────────── */
 #vignette {
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 9;
   background: radial-gradient(
-    ellipse at center,
-    transparent 55%,
-    rgba(0, 0, 0, 0.7) 100%
+    ellipse at 50% 50%,
+    transparent 45%,
+    rgba(0,0,0, 0.55) 80%,
+    rgba(0,0,0, 0.85) 100%
   );
+}
+
+/* ─── HORIZONTAL ABERRATION (subtle color fringe at edges) ──────────────────── */
+#aberration {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 8;
+  background:
+    linear-gradient(to right, rgba(255, 0, 170, 0.04) 0%, transparent 8%, transparent 92%, rgba(0, 245, 255, 0.04) 100%);
 }
